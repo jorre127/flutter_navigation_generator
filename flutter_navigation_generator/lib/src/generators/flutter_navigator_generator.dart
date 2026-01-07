@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:flutter_navigation_generator/src/code_builder/library_builder.dart';
@@ -10,34 +10,19 @@ import 'package:flutter_navigation_generator_annotations/flutter_navigation_gene
 import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
-class FlutterNavigatorGenerator
-    extends GeneratorForAnnotation<FlutterNavigator> {
+class FlutterNavigatorGenerator extends GeneratorForAnnotation<FlutterNavigator> {
   static const _navigatorClassNameDefault = 'BaseNavigator';
 
   @override
-  dynamic generateForAnnotatedElement(
-    Element2 element,
-    ConstantReader annotation,
-    BuildStep buildStep,
-  ) async {
-    final typeResolver = ImportableTypeResolverImpl(
-      await buildStep.resolver.libraries.toList(),
-    );
+  dynamic generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) async {
+    final typeResolver = ImportableTypeResolverImpl(await buildStep.resolver.libraries.toList());
     final configFiles = Glob("**.navigator.json");
-    final navigatorClassName =
-        annotation.peek('navigatorClassName')?.stringValue;
+    final navigatorClassName = annotation.peek('navigatorClassName')?.stringValue;
     final pageTypeAsDartType = annotation.peek('pageType')?.typeValue;
     final unknownRouteAsDartType = annotation.peek('unknownRoute')?.typeValue;
-    final ignoreKeysByDefault =
-        annotation.peek('ignoreKeysByDefault')?.boolValue ?? true;
+    final ignoreKeysByDefault = annotation.peek('ignoreKeysByDefault')?.boolValue ?? true;
     final removeSuffixes =
-        annotation
-            .peek('removeSuffixes')
-            ?.listValue
-            .map((e) => e.toStringValue())
-            .whereType<String>()
-            .toList() ??
-        [];
+        annotation.peek('removeSuffixes')?.listValue.map((e) => e.toStringValue()).whereType<String>().toList() ?? [];
     final defaultGuards =
         annotation
             .peek('defaultGuards')
@@ -47,19 +32,10 @@ class FlutterNavigatorGenerator
             .map(typeResolver.resolveType)
             .toList() ??
         [];
-    final pageType =
-        pageTypeAsDartType == null
-            ? null
-            : typeResolver.resolveType(pageTypeAsDartType);
-    final unknownRoute =
-        unknownRouteAsDartType == null
-            ? null
-            : typeResolver.resolveType(unknownRouteAsDartType);
+    final pageType = pageTypeAsDartType == null ? null : typeResolver.resolveType(pageTypeAsDartType);
+    final unknownRoute = unknownRouteAsDartType == null ? null : typeResolver.resolveType(unknownRouteAsDartType);
     final includeQueryParametersNavigatorConfig =
-        IncludeQueryParametersType.values[annotation
-                .peek('includeQueryParameters')
-                ?.peek('index')
-                ?.intValue ??
+        IncludeQueryParametersType.values[annotation.peek('includeQueryParameters')?.peek('index')?.intValue ??
             IncludeQueryParametersType.onlyOnWeb.index];
     final jsonData = <Map>[];
 
@@ -76,14 +52,13 @@ class FlutterNavigatorGenerator
     final generator = LibraryGenerator(
       routes: routes,
       className: navigatorClassName ?? _navigatorClassNameDefault,
-      targetFile: element.library2?.uri,
+      targetFile: element.library?.uri,
       pageType: pageType,
       unknownRoute: unknownRoute,
       removeSuffixes: removeSuffixes,
       defaultGuards: defaultGuards,
       ignoreKeysByDefault: ignoreKeysByDefault,
-      includeQueryParametersNavigatorConfig:
-          includeQueryParametersNavigatorConfig,
+      includeQueryParametersNavigatorConfig: includeQueryParametersNavigatorConfig,
     );
 
     final generatedLib = generator.generate();

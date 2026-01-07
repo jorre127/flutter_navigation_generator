@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:flutter_navigation_generator/src/models/importable_type.dart';
 import 'package:flutter_navigation_generator/src/resolvers/importable_type_resolver.dart';
@@ -28,20 +28,17 @@ void throwSourceError(String message) {
   throw ("\n${pre.padRight(72, '-')}\n$message\n${''.padRight(72, '-')} \n");
 }
 
-void throwError(String message, {Element2? element}) {
+void throwError(String message, {Element? element}) {
   throw InvalidGenerationSourceError(message, element: element);
 }
 
-void throwIf(bool condition, String message, {Element2? element}) {
+void throwIf(bool condition, String message, {Element? element}) {
   if (condition) {
     throw InvalidGenerationSourceError(message, element: element);
   }
 }
 
-void printBoxed(
-  String message, {
-  String header = '--------------------------',
-}) {
+void printBoxed(String message, {String header = '--------------------------'}) {
   final pre = header;
   // ignore: avoid_print
   print("$pre\n$message\n${''.padRight(72, '-')} \n");
@@ -66,16 +63,11 @@ Reference typeRefer(
       reference
         ..symbol = type.className
         ..url = relativeImport
-        ..isNullable =
-            withNullabilitySuffix && (forceNullable || type.isNullable);
+        ..isNullable = withNullabilitySuffix && (forceNullable || type.isNullable);
       if (type.typeArguments.isNotEmpty) {
         reference.types.addAll(
           type.typeArguments.map(
-            (e) => typeRefer(
-              e,
-              targetFile: targetFile,
-              withNullabilitySuffix: withNullabilitySuffix,
-            ),
+            (e) => typeRefer(e, targetFile: targetFile, withNullabilitySuffix: withNullabilitySuffix),
           ),
         );
       }
@@ -94,8 +86,5 @@ extension StringExtension on String {
   List<String> get pathSegments => Uri.parse(this).pathSegments.toList();
 
   List<String> get parametersFromRouteName =>
-      pathSegments
-          .where((element) => element.startsWith(':'))
-          .map((e) => e.substring(1))
-          .toList();
+      pathSegments.where((element) => element.startsWith(':')).map((e) => e.substring(1)).toList();
 }

@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_navigation_generator/src/models/importable_type.dart';
 import 'package:flutter_navigation_generator/src/models/route_field_config.dart';
@@ -6,19 +6,14 @@ import 'package:flutter_navigation_generator/src/resolvers/importable_type_resol
 import 'package:flutter_navigation_generator_annotations/flutter_navigation_generator_annotations.dart';
 import 'package:source_gen/source_gen.dart';
 
-const TypeChecker _flutterRouteFieldAnnotationChecker = TypeChecker.typeNamed(
-  FlutterRouteField,
-);
+const TypeChecker _flutterRouteFieldAnnotationChecker = TypeChecker.typeNamed(FlutterRouteField);
 
 class RouteFieldResolver {
   final ImportableTypeResolverImpl _typeResolver;
 
-  RouteFieldResolver(List<LibraryElement2> libs)
-    : _typeResolver = ImportableTypeResolverImpl(libs);
+  RouteFieldResolver(List<LibraryElement> libs) : _typeResolver = ImportableTypeResolverImpl(libs);
 
-  List<_RawRouteFieldConfig> _resolveConstructorFields(
-    ExecutableElement2 constructor,
-  ) {
+  List<_RawRouteFieldConfig> _resolveConstructorFields(ExecutableElement constructor) {
     final constructorParameters = constructor.formalParameters;
 
     return constructorParameters.map((parameter) {
@@ -31,10 +26,7 @@ class RouteFieldResolver {
           .annotationsOf(parameter, throwOnUnresolved: false)
           .map(ConstantReader.new);
       if (annotation.isEmpty) {
-        return _RawRouteFieldConfig(
-          type: field,
-          defaultValue: parameter.defaultValueCode,
-        );
+        return _RawRouteFieldConfig(type: field, defaultValue: parameter.defaultValueCode);
       }
       final flutterRouteField = annotation.firstOrNull;
       final queryName = flutterRouteField?.peek('queryName')?.stringValue;
@@ -51,34 +43,19 @@ class RouteFieldResolver {
     }).toList();
   }
 
-  List<RouteFieldConfig> resolveFieldsMethod(
-    ExecutableElement2 constructor,
-    ClassElement2 classElement,
-  ) {
-    final fieldsWithAnnotation = classElement.fields2.asMap().map(
-      (key, value) => MapEntry(
-        value.displayName,
-        _flutterRouteFieldAnnotationChecker
-            .annotationsOf(value)
-            .map(ConstantReader.new),
-      ),
+  List<RouteFieldConfig> resolveFieldsMethod(ExecutableElement constructor, ClassElement classElement) {
+    final fieldsWithAnnotation = classElement.fields.asMap().map(
+      (key, value) =>
+          MapEntry(value.displayName, _flutterRouteFieldAnnotationChecker.annotationsOf(value).map(ConstantReader.new)),
     );
 
     final constructorParameters = _resolveConstructorFields(constructor);
     return constructorParameters
-        .map(
-          (parameter) => _getConfigFromField(
-            fieldsWithAnnotation[parameter.type.argumentName],
-            parameter,
-          ),
-        )
+        .map((parameter) => _getConfigFromField(fieldsWithAnnotation[parameter.type.argumentName], parameter))
         .toList();
   }
 
-  RouteFieldConfig _getConfigFromField(
-    Iterable<ConstantReader>? annotations,
-    _RawRouteFieldConfig parameterData,
-  ) {
+  RouteFieldConfig _getConfigFromField(Iterable<ConstantReader>? annotations, _RawRouteFieldConfig parameterData) {
     final flutterRouteField = annotations?.firstOrNull;
     final queryName = flutterRouteField?.peek('queryName')?.stringValue;
     final ignore = flutterRouteField?.peek('ignore')?.boolValue;
@@ -87,10 +64,7 @@ class RouteFieldResolver {
     return RouteFieldConfig(
       type: parameterData.type,
       defaultValue: parameterData.defaultValue,
-      queryName:
-          parameterData.queryName ??
-          queryName ??
-          parameterData.type.argumentName,
+      queryName: parameterData.queryName ?? queryName ?? parameterData.type.argumentName,
       ignore: parameterData.ignore ?? ignore,
       addToJson: parameterData.addToJson ?? addToJson ?? true,
     );
@@ -104,11 +78,5 @@ class _RawRouteFieldConfig {
   final bool? addToJson;
   final String? queryName;
 
-  _RawRouteFieldConfig({
-    required this.type,
-    required this.defaultValue,
-    this.ignore,
-    this.addToJson,
-    this.queryName,
-  });
+  _RawRouteFieldConfig({required this.type, required this.defaultValue, this.ignore, this.addToJson, this.queryName});
 }
